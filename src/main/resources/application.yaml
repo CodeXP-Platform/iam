@@ -1,3 +1,55 @@
 spring:
   application:
-    name: iam
+    name: ${APP_NAME:iam}
+
+  # PostgreSQL
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:postgres}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # RabbitMQ
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASS:guest}
+    virtual-host: ${RABBITMQ_VHOST:/}
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 3s
+          max-retries: 3
+
+# Eureka Config
+eureka:
+  instance:
+    # When using Docker/k8s then true
+    prefer-ip-address: ${EUREKA_PREFER_IP:true}
+    instance-id: ${spring.application.name}:${random.value}
+  client:
+    register-with-eureka: ${EUREKA_REGISTER:true}
+    fetch-registry: ${EUREKA_FETCH:true}
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
