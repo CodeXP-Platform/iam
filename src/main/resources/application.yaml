@@ -1,3 +1,33 @@
 spring:
   application:
-    name: iam
+    name: iam-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/iam_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: rabbitmq
+    password: rabbitmq
+
+jwt:
+  access-secret: "5a35c3029150c6a2b5f457e0e336e62a248f9d7d5b73400c5e376d445b84463e"
+  refresh-secret: "e48f9831872f17619c272640433739597f80a3a78a25c9b18245247747b4a53c"
+  access-expiration-ms: 900000
+  refresh-expiration-ms: 604800000
+
+server:
+  port: 8081
