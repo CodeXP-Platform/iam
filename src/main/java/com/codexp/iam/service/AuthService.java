@@ -10,6 +10,7 @@ import com.codexp.iam.entity.AuthProvider;
 import com.codexp.iam.entity.Role;
 import com.codexp.iam.entity.User;
 import com.codexp.iam.event.UserRegisteredEvent;
+import com.codexp.iam.exception.AuthProviderConflictException;
 import com.codexp.iam.infrastructure.messaging.DomainEventPublisher;
 import com.codexp.iam.infrastructure.security.JwtUtil;
 import com.codexp.iam.infrastructure.security.RefreshTokenService;
@@ -74,7 +75,7 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalArgumentException("Credenciales inválidas"));
 
         if (user.getAuthProvider() != AuthProvider.EMAIL) {
-            throw new IllegalStateException(
+            throw new AuthProviderConflictException(
                     "Esta cuenta usa " + user.getAuthProvider() +
                             ". Inicia sesión con ese proveedor."
             );

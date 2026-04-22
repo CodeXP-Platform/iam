@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 public class UpdateProfileRequest {
 
-    @Size(min = 3, max = 30, message = "El nickname debe tener entre 3 y 30 caracteres")
+    @Size(min = 3, max = 20, message = "El nickname debe tener entre 3 y 20 caracteres")
     private String nickname;
 
     // URL de la imagen de perfil — opcional
