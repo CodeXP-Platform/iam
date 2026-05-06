@@ -3,7 +3,6 @@ package com.codexp.iam.infrastructure.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -24,8 +23,18 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
 
-    private static final String AUTH_BASE = "/api/v1/iam/auth";
-    private static final String USERS_BASE = "/api/v1/iam/users";
+    private static final String[] PUBLIC_ENDPOINTS = {
+            // Auth (sign-up, sign-in, oauth, refresh, logout)
+            "/api/v1/iam/auth/**",
+            // Perfil público
+            "/api/v1/iam/users/public/**",
+            // Actuator
+            "/api/v1/iam/actuator/**",
+            // Swagger / OpenAPI
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html"
+    };
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -33,15 +42,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Endpoints públicos de autenticación
-                        .requestMatchers(HttpMethod.POST, AUTH_BASE + "/sign-in").permitAll()
-                        .requestMatchers(HttpMethod.POST, AUTH_BASE + "/sign-up").permitAll()
-                        .requestMatchers(HttpMethod.POST, AUTH_BASE + "/oauth/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, AUTH_BASE + "/refresh").permitAll()
-                        .requestMatchers(HttpMethod.POST, AUTH_BASE + "/logout").permitAll()
-                        // Perfil público (sin auth)
-                        .requestMatchers(HttpMethod.GET, USERS_BASE + "/public/**").permitAll()
-                        // Todo lo demás requiere autenticación
+                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
