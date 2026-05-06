@@ -55,3 +55,12 @@ management:
 
 server:
   port: ${PORT:8081}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+  packages-to-scan: com.codexp.iam.iam.interfaces.rest.controllers
+  paths-to-match: /api/v1/iam/**

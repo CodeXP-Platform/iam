@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -39,12 +38,10 @@ public class JwtUtil {
 
     public String generateAccessToken(User user) {
         return Jwts.builder()
-                .subject(user.getId().toString())
-                .claims(Map.of(
-                        "nickname", user.getNickname(),
-                        "email",    user.getEmail(),
-                        "role",     user.getRole().name()
-                ))
+                .subject(user.getId().toString())       // sub — no usar .claims(Map) que lo sobreescribe
+                .claim("nickname", user.getNickname())
+                .claim("email",    user.getEmail())
+                .claim("role",     user.getRole().name())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + accessExpirationMs))
                 .signWith(accessKey)
