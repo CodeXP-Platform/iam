@@ -7,12 +7,16 @@ import com.codexp.iam.iam.interfaces.rest.requests.*;
 import com.codexp.iam.iam.interfaces.rest.responses.AuthResponse;
 import com.codexp.iam.iam.interfaces.rest.transformers.UserAssembler;
 import com.codexp.iam.iam.interfaces.rest.transformers.UserCommandAssembler;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Auth", description = "Registro, login, OAuth y gestión de tokens")
 @RestController
 @RequestMapping("/api/v1/iam/auth")
 @RequiredArgsConstructor
@@ -20,6 +24,7 @@ public class AuthController {
 
     private final UserCommandService commandService;
 
+    @Operation(summary = "Registrar nuevo usuario (email + password)")
     @PostMapping("/sign-up")
     public ResponseEntity<AuthResponse> signUp(@Valid @RequestBody SignUpRequest request) {
         SignUpCommand command = UserCommandAssembler.toSignUpCommand(request);
@@ -27,6 +32,7 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(UserAssembler.toAuthResponse(result));
     }
 
+    @Operation(summary = "Iniciar sesión con email y password")
     @PostMapping("/sign-in")
     public ResponseEntity<AuthResponse> signIn(@Valid @RequestBody SignInRequest request) {
         SignInCommand command = UserCommandAssembler.toSignInCommand(request);
@@ -34,6 +40,7 @@ public class AuthController {
         return ResponseEntity.ok(UserAssembler.toAuthResponse(result));
     }
 
+    @Operation(summary = "Autenticación vía OAuth (Google / GitHub)")
     @PostMapping("/oauth/{provider}")
     public ResponseEntity<AuthResponse> oauth(
             @PathVariable String provider,
@@ -44,6 +51,7 @@ public class AuthController {
         return ResponseEntity.ok(UserAssembler.toAuthResponse(result));
     }
 
+    @Operation(summary = "Renovar access token con refresh token")
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         RefreshTokenCommand command = UserCommandAssembler.toRefreshTokenCommand(request);
@@ -51,11 +59,10 @@ public class AuthController {
         return ResponseEntity.ok(UserAssembler.toAuthResponse(result));
     }
 
-    /**
-     * Logout: the raw Bearer token is passed as a LogoutCommand so the
-     * application service can extract the userId without any infra dependency
-     * leaking into this controller.
-     */
+    @Operation(
+            summary = "Cerrar sesión (revoca el refresh token)",
+            security = @SecurityRequirement(name = "bearerAuth")   // candado solo en logout
+    )
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
             @RequestHeader(value = "Authorization", required = false) String authHeader
