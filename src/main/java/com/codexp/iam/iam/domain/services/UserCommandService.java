@@ -23,4 +23,8 @@ public interface UserCommandService {
     User updateProfile(UpdateProfileCommand command);
 
     void deleteAccount(DeleteAccountCommand command);
+
+    String issueTemporalToken(IssueTemporalTokenCommand command);
+
+    AuthResult exchangeTemporalToken(ExchangeTemporalTokenCommand command);
 }

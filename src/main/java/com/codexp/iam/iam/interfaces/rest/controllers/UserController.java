@@ -1,6 +1,7 @@
 package com.codexp.iam.iam.interfaces.rest.controllers;
 
 import com.codexp.iam.iam.domain.model.commands.DeleteAccountCommand;
+import com.codexp.iam.iam.domain.model.commands.IssueTemporalTokenCommand;
 import com.codexp.iam.iam.domain.model.entities.User;
 import com.codexp.iam.iam.domain.model.queries.GetMyProfileQuery;
 import com.codexp.iam.iam.domain.model.queries.GetPublicProfileQuery;
@@ -8,6 +9,7 @@ import com.codexp.iam.iam.domain.services.UserCommandService;
 import com.codexp.iam.iam.domain.services.UserQueryService;
 import com.codexp.iam.iam.interfaces.rest.requests.UpdateProfileRequest;
 import com.codexp.iam.iam.interfaces.rest.responses.PublicUserResponse;
+import com.codexp.iam.iam.interfaces.rest.responses.TemporalTokenResponse;
 import com.codexp.iam.iam.interfaces.rest.responses.UserProfileResponse;
 import com.codexp.iam.iam.interfaces.rest.transformers.UserAssembler;
 import com.codexp.iam.iam.interfaces.rest.transformers.UserCommandAssembler;
@@ -61,6 +63,17 @@ public class UserController {
     ) {
         commandService.deleteAccount(new DeleteAccountCommand(UUID.fromString(userId)));
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Generar token temporal de 1 minuto para handoff cross-app")
+    @PostMapping("/me/temporal-token")
+    public ResponseEntity<TemporalTokenResponse> issueTemporalToken(
+            @Parameter(hidden = true) @AuthenticationPrincipal String userId
+    ) {
+        String token = commandService.issueTemporalToken(
+                new IssueTemporalTokenCommand(UUID.fromString(userId))
+        );
+        return ResponseEntity.ok(new TemporalTokenResponse(token));
     }
 
     @Operation(summary = "Ver perfil público de un usuario", security = {})  // sin candado — endpoint público

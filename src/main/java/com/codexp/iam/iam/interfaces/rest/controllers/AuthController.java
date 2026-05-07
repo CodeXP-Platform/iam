@@ -59,6 +59,17 @@ public class AuthController {
         return ResponseEntity.ok(UserAssembler.toAuthResponse(result));
     }
 
+    @Operation(summary = "Intercambiar token temporal (1 min) por JWT con vida normal")
+    @PostMapping("/exchange-temporal-token")
+    public ResponseEntity<AuthResponse> exchangeTemporalToken(
+            @Valid @RequestBody ExchangeTemporalTokenRequest request
+    ) {
+        AuthResult result = commandService.exchangeTemporalToken(
+                new ExchangeTemporalTokenCommand(request.temporalToken())
+        );
+        return ResponseEntity.ok(UserAssembler.toAuthResponse(result));
+    }
+
     @Operation(
             summary = "Cerrar sesión (revoca el refresh token)",
             security = @SecurityRequirement(name = "bearerAuth")   // candado solo en logout

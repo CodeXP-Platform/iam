@@ -96,6 +96,28 @@ public class JwtUtil {
         }
     }
 
+    // ── Temporal Token ────────────────────────────────────────────────────────
+
+    private static final long    TEMPORAL_EXPIRATION_MS = 60_000L;
+    private static final String  TEMPORAL_CLAIM         = "temporal";
+
+    public String generateTemporalToken(User user) {
+        return Jwts.builder()
+                .subject(user.getId().toString())
+                .claim("nickname",      user.getNickname())
+                .claim("email",         user.getEmail())
+                .claim("role",          user.getRole().name())
+                .claim(TEMPORAL_CLAIM,  true)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + TEMPORAL_EXPIRATION_MS))
+                .signWith(accessKey)
+                .compact();
+    }
+
+    public boolean isTemporalToken(Claims claims) {
+        return Boolean.TRUE.equals(claims.get(TEMPORAL_CLAIM, Boolean.class));
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     public UUID extractUserId(String accessToken) {

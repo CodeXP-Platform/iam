@@ -48,6 +48,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             Claims claims = jwtUtil.parseAccessToken(token);
+
+            if (jwtUtil.isTemporalToken(claims)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             String userId   = claims.getSubject();
             String role     = claims.get("role", String.class);
             String nickname = claims.get("nickname", String.class);

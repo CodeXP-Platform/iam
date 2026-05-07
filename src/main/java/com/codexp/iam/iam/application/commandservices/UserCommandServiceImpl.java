@@ -4,6 +4,7 @@ import com.codexp.iam.iam.domain.events.UserDeletedEvent;
 import com.codexp.iam.iam.domain.events.UserProfileUpdatedEvent;
 import com.codexp.iam.iam.domain.events.UserRegisteredEvent;
 import com.codexp.iam.iam.domain.model.commands.*;
+import io.jsonwebtoken.Claims;
 import com.codexp.iam.iam.domain.model.entities.User;
 import com.codexp.iam.iam.domain.model.valueobjects.AuthProvider;
 import com.codexp.iam.iam.domain.model.valueobjects.AuthResult;
@@ -210,6 +211,32 @@ public class UserCommandServiceImpl implements UserCommandService {
 
         userRepository.delete(user);
         log.info("Cuenta eliminada para userId={}", command.userId());
+    }
+
+    // ── Temporal Token ────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public String issueTemporalToken(IssueTemporalTokenCommand command) {
+        User user = userRepository.findById(command.userId())
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+        return jwtUtil.generateTemporalToken(user);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AuthResult exchangeTemporalToken(ExchangeTemporalTokenCommand command) {
+        if (!jwtUtil.isAccessTokenValid(command.temporalToken())) {
+            throw new IllegalArgumentException("Token temporal inválido o expirado");
+        }
+        Claims claims = jwtUtil.parseAccessToken(command.temporalToken());
+        if (!jwtUtil.isTemporalToken(claims)) {
+            throw new IllegalArgumentException("El token proporcionado no es un token temporal");
+        }
+        UUID userId = UUID.fromString(claims.getSubject());
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+        return buildAuthResult(user);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
