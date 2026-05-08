@@ -30,6 +30,7 @@ public class SecurityConfig {
             "/api/v1/iam/users/public/**",
             // Actuator
             "/api/v1/iam/actuator/**",
+            "/oauth2/**",
             // Swagger / OpenAPI
             "/v3/api-docs/**",
             "/swagger-ui/**",

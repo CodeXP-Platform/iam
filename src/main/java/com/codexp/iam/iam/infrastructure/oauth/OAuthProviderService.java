@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -12,10 +13,7 @@ public class OAuthProviderService {
 
     private final RestClient restClient = RestClient.create();
 
-    /**
-     * Normalized profile extracted from any OAuth provider.
-     */
-    public record OAuthProfile(String email, String name, String picture) {}
+    public record OAuthProfile(String providerUserId, String email, String name, String picture) {}
 
     public OAuthProfile fetchProfile(String provider, String providerToken) {
         return switch (provider.toLowerCase()) {
@@ -39,6 +37,7 @@ public class OAuthProviderService {
         }
 
         return new OAuthProfile(
+                (String) response.get("sub"),
                 (String) response.get("email"),
                 (String) response.get("name"),
                 (String) response.get("picture")
@@ -59,17 +58,37 @@ public class OAuthProviderService {
             throw new IllegalArgumentException("Token de GitHub inválido");
         }
 
+        String providerUserId = String.valueOf(response.get("id"));
         String email = (String) response.get("email");
+
+        // /user returns null email when it's private; try /user/emails as fallback
         if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException(
-                    "Tu cuenta de GitHub no tiene email público. Configura uno en GitHub e intenta de nuevo."
-            );
+            email = fetchGithubPrimaryEmail(accessToken);
         }
 
+        // email may still be null — that's fine, we identify the user by providerUserId
         return new OAuthProfile(
-                email,
+                providerUserId,
+                (email != null && !email.isBlank()) ? email : null,
                 (String) response.get("name"),
                 (String) response.get("avatar_url")
         );
+    }
+
+    @SuppressWarnings("unchecked")
+    private String fetchGithubPrimaryEmail(String accessToken) {
+        List<Map<String, Object>> emails = restClient.get()
+                .uri("https://api.github.com/user/emails")
+                .header("Authorization", "Bearer " + accessToken)
+                .retrieve()
+                .body(List.class);
+
+        if (emails == null) return null;
+
+        return emails.stream()
+                .filter(e -> Boolean.TRUE.equals(e.get("primary")) && Boolean.TRUE.equals(e.get("verified")))
+                .map(e -> (String) e.get("email"))
+                .findFirst()
+                .orElse(null);
     }
 }

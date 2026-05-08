@@ -19,6 +19,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     boolean existsByNickname(String nickname);
 
+    Optional<User> findByProviderUserId(String providerUserId);
+
     /**
      * Used to detect OAuth/EMAIL collision:
      * if the email exists with provider=EMAIL we block the OAuth flow.

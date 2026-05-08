@@ -22,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -98,33 +99,45 @@ public class UserCommandServiceImpl implements UserCommandService {
         OAuthProviderService.OAuthProfile profile =
                 oAuthProviderService.fetchProfile(command.provider(), command.providerToken());
 
-        userRepository.findByEmailAndAuthProvider(profile.email(), AuthProvider.EMAIL)
-                .ifPresent(existing -> {
-                    throw new IllegalStateException(
-                            "Este email ya está registrado con contraseña. " +
-                                    "Por favor inicia sesión con tu email y contraseña."
-                    );
-                });
+        // Detect EMAIL/OAuth collision only when we have an email
+        if (profile.email() != null) {
+            userRepository.findByEmailAndAuthProvider(profile.email(), AuthProvider.EMAIL)
+                    .ifPresent(existing -> {
+                        throw new IllegalStateException(
+                                "Este email ya está registrado con contraseña. " +
+                                        "Por favor inicia sesión con tu email y contraseña."
+                        );
+                    });
+        }
 
-        User user = userRepository.findByEmail(profile.email())
-                .orElseGet(() -> {
-                    String nickname = resolveNickname(command.nickname(), profile.email());
-                    User newUser = User.builder()
-                            .email(profile.email())
-                            .nickname(nickname)
-                            .username(profile.name() != null ? profile.name() : nickname)
-                            .picture(profile.picture() != null ? profile.picture() : "")
-                            .role(Role.ROLE_STUDENT)
-                            .authProvider(AuthProvider.OAUTH)
-                            .build();
-                    userRepository.save(newUser);
-                    log.info("Usuario OAuth creado: {}", newUser.getEmail());
-                    eventPublisher.publishUserRegistered(
-                            UserRegisteredEvent.of(newUser.getId(), newUser.getEmail(),
-                                    newUser.getNickname(), newUser.getRole().name())
-                    );
-                    return newUser;
-                });
+        // Look up by providerUserId first, then by email as fallback
+        Optional<User> existing = profile.providerUserId() != null
+                ? userRepository.findByProviderUserId(profile.providerUserId())
+                : Optional.empty();
+
+        if (existing.isEmpty() && profile.email() != null) {
+            existing = userRepository.findByEmail(profile.email());
+        }
+
+        User user = existing.orElseGet(() -> {
+            String nickname = resolveNickname(command.nickname(), profile.email());
+            User newUser = User.builder()
+                    .email(profile.email())
+                    .providerUserId(profile.providerUserId())
+                    .nickname(nickname)
+                    .username(profile.name() != null ? profile.name() : nickname)
+                    .picture(profile.picture() != null ? profile.picture() : "")
+                    .role(Role.ROLE_STUDENT)
+                    .authProvider(AuthProvider.OAUTH)
+                    .build();
+            userRepository.save(newUser);
+            log.info("Usuario OAuth creado: providerUserId={}", newUser.getProviderUserId());
+            eventPublisher.publishUserRegistered(
+                    UserRegisteredEvent.of(newUser.getId(), newUser.getEmail(),
+                            newUser.getNickname(), newUser.getRole().name())
+            );
+            return newUser;
+        });
 
         return buildAuthResult(user);
     }
@@ -254,7 +267,10 @@ public class UserCommandServiceImpl implements UserCommandService {
                     ? requested + "_" + UUID.randomUUID().toString().substring(0, 5)
                     : requested;
         }
-        String base = email.split("@")[0].replaceAll("[^a-zA-Z0-9_]", "");
+        String base = email != null
+                ? email.split("@")[0].replaceAll("[^a-zA-Z0-9_]", "")
+                : "user";
+        if (base.isBlank()) base = "user";
         return userRepository.existsByNickname(base)
                 ? base + "_" + UUID.randomUUID().toString().substring(0, 5)
                 : base;

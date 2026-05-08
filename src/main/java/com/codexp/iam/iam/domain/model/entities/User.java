@@ -33,8 +33,11 @@ public class User {
     @Column(nullable = true)
     private String password;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = true, unique = true)
     private String email;
+
+    @Column(nullable = true, unique = true, name = "provider_user_id")
+    private String providerUserId;
 
     @Column(nullable = false)
     private String picture;

@@ -25,13 +25,13 @@ public class JwtUtil {
     public JwtUtil(
             @Value("${jwt.access-secret}") String accessSecret,
             @Value("${jwt.refresh-secret}") String refreshSecret,
-            @Value("${jwt.access-expiration-ms}") long accessExpirationMs,
-            @Value("${jwt.refresh-expiration-ms}") long refreshExpirationMs
+            @Value("${jwt.access-expiration-seconds}") long accessExpirationSeconds,
+            @Value("${jwt.refresh-expiration-seconds}") long refreshExpirationSeconds
     ) {
         this.accessKey = Keys.hmacShaKeyFor(Base64.getDecoder().decode(accessSecret));
         this.refreshKey = Keys.hmacShaKeyFor(Base64.getDecoder().decode(refreshSecret));
-        this.accessExpirationMs = accessExpirationMs;
-        this.refreshExpirationMs = refreshExpirationMs;
+        this.accessExpirationMs = accessExpirationSeconds * 1000L;
+        this.refreshExpirationMs = refreshExpirationSeconds * 1000L;
     }
 
     // ── Access Token ──────────────────────────────────────────────────────────
