@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class RefreshTokenService {
 
-    @Value("${jwt.refresh-expiration-ms}")
+    @Value("${jwt.refresh-expiration-seconds}")
     private long refreshExpirationMs;
 
     /**
