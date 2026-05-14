@@ -54,7 +54,7 @@ spring:
 jwt:
   access-secret: ${JWT_ACCESS_SECRET}
   refresh-secret: ${JWT_REFRESH_SECRET}
-  access-expiration-seconds: ${JWT_ACCESS_EXPIRATION_SECONDS:3600}    # 1h
+  access-expiration-seconds: ${JWT_ACCESS_EXPIRATION_SECONDS:302400}    # 1h
   refresh-expiration-seconds: ${JWT_REFRESH_EXPIRATION_SECONDS:604800} # 168h (7d)
 
 eureka:
